@@ -60,11 +60,12 @@ def build_index(in_dir, out_dict, out_postings):
         # Write out the term and document frequency
         for term, postings_list in index.items():
             # whitespace separated (doci, term_freq)
-            opost.write(f'{" ".join([str(id_freq) for id_freq in postings_list])}\n')
+            opost.write(f'{" ".join([f"({id_freq[0]},{id_freq[1]})" for id_freq in postings_list])}\n')
             end_offset = opost.tell()
+            size = end_offset - start_offset
 
             # whitespace separated - term doc_freq start size
-            odict.write(f'{term} {len(postings_list)} {start_offset}\n')
+            odict.write(f'{term} {len(postings_list)} {start_offset} {size}\n')
             start_offset = end_offset
 
 

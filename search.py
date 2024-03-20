@@ -3,6 +3,7 @@ import re
 import nltk
 import sys
 import getopt
+from indexer import Indexer
 
 def usage():
     print("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
@@ -15,6 +16,9 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     print('running search on the queries...')
     # This is an empty method
     # Pls implement your code in below
+    with Indexer(dict_file, postings_file) as indexer:
+        index = indexer.rebuild_index()
+        doc_length_index = indexer.index_doc_length()
 
 dictionary_file = postings_file = file_of_queries = output_file_of_results = None
 
