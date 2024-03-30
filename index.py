@@ -1,15 +1,21 @@
 #!/usr/bin/python3
-import re
-import nltk
-import sys
 import getopt
 import math
 import os
-from preprocessor import Preprocessor
+import re
+import sys
 from collections import Counter
 
+import nltk
+
+from preprocessor import Preprocessor
+
+
 def usage():
-    print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
+    print(
+        "usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file"
+    )
+
 
 def build_index(in_dir, out_dict, out_postings):
     """
@@ -43,11 +49,6 @@ def build_index(in_dir, out_dict, out_postings):
             postings_list.append((filename, term_frequency))
             index[term] = postings_list
 
-    # Write out the normalized lengths to doc_length.txt
-    with open("./doc_lengths.txt", "w") as olen:
-        for docid, length in normalized_lengths.items():
-            olen.write(f"{docid} {length}\n")
-
     with open(out_dict, "w") as odict, open(out_postings, "w") as opost:
         start_offset = 0
 
@@ -64,21 +65,27 @@ def build_index(in_dir, out_dict, out_postings):
             odict.write(f"{term} {len(postings_list)} {start_offset} {size}\n")
             start_offset = end_offset
 
+        odict.write("\n")
+
+        # Append the normalized lengths to dictionary file.
+        for docid, length in normalized_lengths.items():
+            odict.write(f"{docid} {length}\n")
+
 
 input_directory = output_file_dictionary = output_file_postings = None
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], 'i:d:p:')
+    opts, args = getopt.getopt(sys.argv[1:], "i:d:p:")
 except getopt.GetoptError:
     usage()
     sys.exit(2)
 
 for o, a in opts:
-    if o == '-i': # input directory
+    if o == "-i":  # input directory
         input_directory = a
-    elif o == '-d': # dictionary file
+    elif o == "-d":  # dictionary file
         output_file_dictionary = a
-    elif o == '-p': # postings file
+    elif o == "-p":  # postings file
         output_file_postings = a
     else:
         assert False, "unhandled option"
