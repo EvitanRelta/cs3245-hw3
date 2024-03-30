@@ -25,7 +25,7 @@ def build_index(in_dir, out_dict, out_postings):
     index = {}
 
     for filename in sorted(filenames):
-        filepath = in_dir + str(filename)
+        filepath = os.path.join(in_dir, str(filename))
 
         # Each document has its own counter to keep track of the internal counts
         counter = Counter()
