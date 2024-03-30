@@ -13,12 +13,13 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     using the given dictionary file and postings file,
     perform searching on the given queries file and output the results to a file
     """
-    print('running search on the queries...')
+    print("running search on the queries...")
     # This is an empty method
     # Pls implement your code in below
     with Indexer(dict_file, postings_file) as indexer:
         index = indexer.rebuild_index()
         doc_length_index = indexer.index_doc_length()
+
 
 dictionary_file = postings_file = file_of_queries = output_file_of_results = None
 
