@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import getopt
+import heapq
 import math
 import re
 import sys
@@ -53,13 +54,10 @@ def run_search(dict_file, postings_file, queries_file, results_file):
                 for doc_id in scores.keys():
                     scores[doc_id] /= indexer.doc_norm_lengths[doc_id] * query_norm
 
-                    docs_and_scores = list(scores.items())
-                    # sort by ascending doc-id first
-                    docs_and_scores.sort(key=lambda x: x[0])
-                    # then sort by descending score
-                    docs_and_scores.sort(key=lambda x: x[1], reverse=True)
-
-                    relevant_docs = [x[0] for x in docs_and_scores[:10]]
+                    heap_items = [(-score, doc_id) for doc_id, score in scores.items()]
+                    heapq.heapify(heap_items)
+                    top_items = [heapq.heappop(heap_items) for _ in range(min(10, len(heap_items)))]
+                    relevant_docs = [doc_id for _, doc_id in top_items]
 
                 padding = "" if is_first_line else "\n"
                 out_file.write(padding + " ".join(map(str, relevant_docs)))
