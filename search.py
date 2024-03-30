@@ -1,15 +1,16 @@
 #!/usr/bin/python3
 import getopt
-from operator import index
+import math
 import re
 import sys
+import time
+from collections import Counter, defaultdict
+from operator import index
 
 import nltk
 
 from indexer import Indexer
-from utils import cosine_similarity, get_tf_idf
 from preprocessor import Preprocessor
-from collections import Counter
 
 
 def usage():
@@ -26,43 +27,45 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     perform searching on the given queries file and output the results to a file
     """
     print("running search on the queries...")
+    start_time = time.time()
     with Indexer(dict_file, postings_file) as indexer:
         with open(queries_file, "r") as in_file, open(results_file, "w") as out_file:
+            is_first_line: bool = True
+            N = indexer.num_docs
+
             for query in in_file:
                 query = query.rstrip("\n")
+                terms_freq = Counter(Preprocessor.tokenize(query))
+                query_norm = math.sqrt(sum(tf**2 for tf in terms_freq.values()))
 
-                terms = Preprocessor.tokenize(query)
-                terms_freq = Counter(terms)
+                scores: dict[int, float] = defaultdict(lambda: 0.0)
+                for term, tf in terms_freq.items():
+                    df, postings_list = indexer.get_term_data(term)
+                    if tf == 0 or df == 0:
+                        continue
 
-                score: float = 0
-                for term,term_freq in terms_freq.items():
-                    term_data = indexer.get_term_data(term)
-                    tf_idf = get_tf_idf(term_freq, term_data.doc_freq, indexer.num_docs)
+                    query_weight = (1 + math.log10(tf)) * math.log10(N / df)
 
-                
+                    for doc_id, tf in postings_list:
+                        doc_weight = 1 + math.log10(tf)
+                        scores[doc_id] += doc_weight * query_weight
 
-def compute_query_weights(term_data_dict: dict[str, TermData]) -> dict[str, float]:
-    query_weights: dict[str, float] = {}
-    for term_data in term_data_list:
-        query_weights[term_data.term] = get_tf_idf(
-            query_terms.count(term), term_data.doc_freq, NUM_DOC
-        )
+                for doc_id in scores.keys():
+                    scores[doc_id] /= indexer.doc_norm_lengths[doc_id] * query_norm
 
-    # Normalize query weights using cosine normalization
-    norm: float = sqrt(sum(weight**2 for weight in query_weights.values()))
-    if norm > 0:
-        query_weights = {term: weight / norm for term, weight in query_weights.items()}
+                    docs_and_scores = list(scores.items())
+                    # sort by ascending doc-id first
+                    docs_and_scores.sort(key=lambda x: x[0])
+                    # then sort by descending score
+                    docs_and_scores.sort(key=lambda x: x[1], reverse=True)
 
-    return query_weights
+                    relevant_docs = [x[0] for x in docs_and_scores[:10]]
 
-
-                indexer.get_term_data()
-
-                result_postings = query_parser.parse_query(query)
-
-                newline = "" if is_first_line else "\n"
-                out_file.write(newline + " ".join(map(str, result_postings)))
+                padding = "" if is_first_line else "\n"
+                out_file.write(padding + " ".join(map(str, relevant_docs)))
                 is_first_line = False
+    end_time = time.time()
+    print(f"Execution time: {end_time - start_time}s")
 
 
 dictionary_file = postings_file = file_of_queries = output_file_of_results = None

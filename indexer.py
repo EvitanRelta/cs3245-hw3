@@ -1,6 +1,3 @@
-from term_data import TermData
-
-
 class Indexer:
     """Handles getting the inverted-index from the dictionary and postings files."""
 
@@ -54,14 +51,17 @@ class Indexer:
 
         return term_metadata, doc_norm_lengths
 
-    def get_term_data(self, term: str) -> TermData:
+    def get_term_data(self, term: str) -> tuple[int, list[tuple[int, int]]]:
         """Gets the postings list for `term`."""
+        if term not in self.term_metadata:
+            return 0, []
+
         doc_freq, offset, size = self.term_metadata[term]
         self.postings_file_io.seek(offset)
-        raw_postings_str = self.postings_file_io.read(size).decode().rstrip("\n")
+        raw_postings_str = self.postings_file_io.read(size).decode().rstrip()
 
-        term_freq_dict: dict[int, int] = {}
-        for s in raw_postings_str:
+        postings_list: list[tuple[int, int]] = []
+        for s in raw_postings_str.split(" "):
             docid, term_freq = s.rstrip(")").lstrip("(").split(",")
-            term_freq_dict[int(docid)] = int(term_freq)
-        return TermData(doc_freq, term_freq_dict)
+            postings_list.append((int(docid), int(term_freq)))
+        return doc_freq, postings_list
