@@ -1,4 +1,3 @@
-
 class Indexer:
     """Handles getting the inverted-index from the dictionary and postings files."""
 
@@ -9,9 +8,9 @@ class Indexer:
             postings_file_path (str): Path to file containing all the postings list.
             doc_length_path (str): Path to file containing all doc lengths.
         """
-        self.dict_file = open(dict_file_path, 'r')
-        self.postings_file = open(postings_file_path, 'rb')
-        self.doc_length_file = open(doc_length_path, 'r')
+        self.dict_file = open(dict_file_path, "r")
+        self.postings_file = open(postings_file_path, "rb")
+        self.doc_length_file = open(doc_length_path, "r")
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self.close()
@@ -22,7 +21,6 @@ class Indexer:
         self.postings_file.close()
         self.doc_length_file.close()
 
-
     def rebuild_index(self):
         rebuilt_index = {}
         for line in self.dict_file:
@@ -30,15 +28,14 @@ class Indexer:
                 continue
             term, doc_freq, offset, size = line.rstrip("\n").split()
             rebuilt_index[term] = self._get_postings(int(offset), int(size))
-        
+
         return rebuilt_index
 
     def _get_postings(self, offset, size):
         self.postings_file.seek(offset)
         postings_str = self.postings_file.read(size).decode().rstrip("\n").split()
-        postings_list = list(map(lambda x: x.rstrip(')').lstrip('(').split(','), postings_str))
+        postings_list = list(map(lambda x: x.rstrip(")").lstrip("(").split(","), postings_str))
         return postings_list
-
 
     def index_doc_length(self):
         doc_length_index = {}

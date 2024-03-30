@@ -16,11 +16,9 @@ def build_index(in_dir, out_dict, out_postings):
     build index from documents stored in the input directory,
     then output the dictionary file and postings file
     """
-    
-    print('indexing...')
+    print("indexing...")
     # This is an empty method
     # Pls implement your code in below
-
 
     filenames = [int(x) for x in os.listdir(in_dir)]
     normalized_lengths = {}
@@ -39,10 +37,10 @@ def build_index(in_dir, out_dict, out_postings):
         # Accumulate and compute normalized length
         normalized_length = 0
         for term_frequency in counter.values():
-            normalized_length += term_frequency ** 2
+            normalized_length += term_frequency**2
 
         normalized_lengths[filename] = math.sqrt(normalized_length)
-        
+
         # Update the index with local counts
         for term, term_frequency in counter.items():
             postings_list = index.get(term, [])
@@ -50,22 +48,24 @@ def build_index(in_dir, out_dict, out_postings):
             index[term] = postings_list
 
     # Write out the normalized lengths to doc_length.txt
-    with open('./doc_lengths.txt', 'w') as olen:
+    with open("./doc_lengths.txt", "w") as olen:
         for docid, length in normalized_lengths.items():
-            olen.write(f'{docid} {length}\n')
+            olen.write(f"{docid} {length}\n")
 
-    with open(out_dict, 'w') as odict, open(out_postings, 'w') as opost:
+    with open(out_dict, "w") as odict, open(out_postings, "w") as opost:
         start_offset = 0
 
         # Write out the term and document frequency
         for term, postings_list in index.items():
             # whitespace separated (doci, term_freq)
-            opost.write(f'{" ".join([f"({id_freq[0]},{id_freq[1]})" for id_freq in postings_list])}\n')
+            opost.write(
+                f'{" ".join([f"({id_freq[0]},{id_freq[1]})" for id_freq in postings_list])}\n'
+            )
             end_offset = opost.tell()
             size = end_offset - start_offset
 
             # whitespace separated - term doc_freq start size
-            odict.write(f'{term} {len(postings_list)} {start_offset} {size}\n')
+            odict.write(f"{term} {len(postings_list)} {start_offset} {size}\n")
             start_offset = end_offset
 
 
