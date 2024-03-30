@@ -21,7 +21,7 @@ class Indexer:
         self.postings_file.close()
         self.doc_length_file.close()
 
-    def rebuild_index(self):
+    def rebuild_index(self) -> dict[str, list[list[str]]]:
         rebuilt_index = {}
         for line in self.dict_file:
             if line == "\n":
@@ -31,13 +31,13 @@ class Indexer:
 
         return rebuilt_index
 
-    def _get_postings(self, offset, size):
+    def _get_postings(self, offset: int, size: int) -> list[list[str]]:
         self.postings_file.seek(offset)
         postings_str = self.postings_file.read(size).decode().rstrip("\n").split()
         postings_list = list(map(lambda x: x.rstrip(")").lstrip("(").split(","), postings_str))
         return postings_list
 
-    def index_doc_length(self):
+    def index_doc_length(self) -> dict[int, float]:
         doc_length_index = {}
         for line in self.doc_length_file:
             docid, doc_length = line.rstrip("\n").split()
