@@ -13,7 +13,8 @@ class Indexer:
             doc_length_path (str): Path to file containing all doc lengths.
         """
         self.postings_file_io = open(postings_file_path, "rb")
-        self.term_metadata, self.doc_lengths = self._load_data_from_dict_file(dict_file_path)
+        self.term_metadata, self.doc_norm_lengths = self._load_data_from_dict_file(dict_file_path)
+        self.num_docs: int = len(self.doc_norm_lengths)
 
     def __enter__(self) -> "Indexer":
         return self
@@ -33,10 +34,10 @@ class Indexer:
 
         Returns:
             tuple[dict[str, tuple[int, int, int]], dict[int, float]]: \
-                `(term_metadata, doc_lengths)`.
+                `(term_metadata, doc_norm_lengths)`.
         """
         term_metadata: dict[str, tuple[int, int, int]] = {}
-        doc_lengths: dict[int, float] = {}
+        doc_norm_lengths: dict[int, float] = {}
 
         with open(dict_file_path, "r") as f:
             for line in f:
@@ -48,10 +49,10 @@ class Indexer:
             for line in f:
                 if line == "\n":
                     break
-                docid, length = line.rstrip("\n").split()
-                doc_lengths[int(docid)] = float(length)
+                docid, norm_length = line.rstrip("\n").split()
+                doc_norm_lengths[int(docid)] = float(norm_length)
 
-        return term_metadata, doc_lengths
+        return term_metadata, doc_norm_lengths
 
     def get_term_data(self, term: str) -> TermData:
         """Gets the postings list for `term`."""

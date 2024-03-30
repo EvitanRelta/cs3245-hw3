@@ -9,6 +9,7 @@ from collections import Counter
 import nltk
 
 from preprocessor import Preprocessor
+from utils import get_norm_length
 
 
 def usage():
@@ -36,12 +37,7 @@ def build_index(in_dir, out_dict, out_postings):
         # Each document has its own counter to keep track of the internal counts
         counter = Counter(Preprocessor.to_token_stream(filepath))
 
-        # Accumulate and compute normalized length
-        normalized_length = 0
-        for term_frequency in counter.values():
-            normalized_length += term_frequency**2
-
-        normalized_lengths[filename] = math.sqrt(normalized_length)
+        normalized_lengths[filename] = get_norm_length(counter)
 
         # Update the index with local counts
         for term, term_frequency in counter.items():

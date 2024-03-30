@@ -9,16 +9,16 @@ class Preprocessor:
     stemmer = nltk.PorterStemmer()
 
     @staticmethod
-    def preprocess_token(token: str) -> str:
-        """Preprocess a single token.
+    def tokenize(sentence: str) -> list[str]:
+        """Tokenize a single sentence.
 
         Preprocessing applied in order of execution:
         - Case-folding to lowercase.
+        - Word tokenization using `nltk.word_tokenize`.
         - Stemming using `nltk.PorterStemmer`.
         """
-        token = token.lower()
-        token = Preprocessor.stemmer.stem(token)
-        return token
+        sentence = sentence.lower()
+        return [Preprocessor.stemmer.stem(token) for token in nltk.word_tokenize(sentence)]
 
     @staticmethod
     def to_token_stream(filepath: str) -> Iterator[str]:
