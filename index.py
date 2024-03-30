@@ -21,18 +21,14 @@ def build_index(in_dir, out_dict, out_postings):
     # Pls implement your code in below
 
     filenames = [int(x) for x in os.listdir(in_dir)]
-    normalized_lengths = {}
-    index = {}
+    normalized_lengths: dict[int, float] = {}
+    index: dict[str, list[tuple[int, int]]] = {}
 
     for filename in sorted(filenames):
         filepath = os.path.join(in_dir, str(filename))
 
         # Each document has its own counter to keep track of the internal counts
-        counter = Counter()
-
-        # Iterate through document and maintain count
-        for token in Preprocessor.to_token_stream(filepath):
-            counter.update([token])
+        counter = Counter(Preprocessor.to_token_stream(filepath))
 
         # Accumulate and compute normalized length
         normalized_length = 0
