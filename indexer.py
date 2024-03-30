@@ -12,6 +12,9 @@ class Indexer:
         self.postings_file = open(postings_file_path, "rb")
         self.doc_length_file = open(doc_length_path, "r")
 
+    def __enter__(self) -> "Indexer":
+        return self
+
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self.close()
 
