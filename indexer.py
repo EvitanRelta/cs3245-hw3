@@ -1,3 +1,6 @@
+from linked_list import LinkedList
+
+
 class Indexer:
     """Handles reading the dictionary and postings files."""
 
@@ -70,7 +73,7 @@ class Indexer:
 
         return term_metadata, doc_norm_lengths
 
-    def get_term_data(self, term: str) -> tuple[int, list[tuple[int, int]]]:
+    def get_term_data(self, term: str) -> tuple[int, LinkedList[tuple[int, int]]]:
         """Gets the term's DF (from dictionary file) and postings list (from
         postings file).
 
@@ -87,10 +90,10 @@ class Indexer:
         ```
 
         Returns:
-            tuple[int, list[tuple[int, int]]]: `(df, postings_list)`
+            tuple[int, LinkedList[tuple[int, int]]]: `(df, postings_list)`
         """
         if term not in self.term_metadata:
-            return 0, []
+            return 0, LinkedList.NULL_NODE
 
         df, offset, size = self.term_metadata[term]
         self.postings_file_io.seek(offset)
@@ -100,4 +103,4 @@ class Indexer:
         for s in raw_postings_str.split(" "):
             docid, term_freq = s.rstrip(")").lstrip("(").split(",")
             postings_list.append((int(docid), int(term_freq)))
-        return df, postings_list
+        return df, LinkedList.from_list(postings_list)
