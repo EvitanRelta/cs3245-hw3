@@ -1,18 +1,20 @@
-from typing import Iterable, Iterator
+from typing import Generic, Iterable, Iterator, TypeVar
+
+T = TypeVar("T")
 
 
-class LinkedList(Iterable):
-    """Linked-list implementation to contain integer values."""
+class LinkedList(Iterable, Generic[T]):
+    """Linked-list implementation."""
 
     NULL_NODE: "LinkedList" = None  # type: ignore
     """The linked-list node that represents the lack of any values."""
 
-    def __init__(self, value: int) -> None:
+    def __init__(self, value: T) -> None:
         """
         Args:
-            value (int): Value in the skip-list node.
+            value (T): Value in the skip-list node.
         """
-        self.value: int = value
+        self.value: T = value
         self.next_node = LinkedList.NULL_NODE
 
     def is_null_node(self) -> bool:
@@ -23,13 +25,13 @@ class LinkedList(Iterable):
             pass
         return i
 
-    def __iter__(self) -> Iterator[int]:
+    def __iter__(self) -> Iterator[T]:
         node = self
         while not node.is_null_node():
             yield node.value
             node = node.next_node
 
-    def deep_copy(self) -> "LinkedList":
+    def deep_copy(self) -> "LinkedList[T]":
         """Recursively copies all the `LinkedList` nodes."""
         iterator = iter(self)
         first_node = LinkedList(next(iterator))
@@ -40,7 +42,7 @@ class LinkedList(Iterable):
         return first_node
 
     @staticmethod
-    def from_list(lst: list[int]) -> "LinkedList":
+    def from_list(lst: list[T]) -> "LinkedList[T]":
         """Converts a list into a `LinkedList`"""
         output = LinkedList.NULL_NODE
         last_node = LinkedList.NULL_NODE  # type: ignore
