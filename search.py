@@ -37,8 +37,8 @@ def run_search(dict_file, postings_file, queries_file, results_file):
             for query in in_file:
                 query = query.rstrip("\n")
                 terms_freq = Counter(Preprocessor.tokenize(query))
-                query_norm = math.sqrt(sum(tf**2 for tf in terms_freq.values()))
 
+                query_norm = 0
                 scores: dict[int, float] = defaultdict(lambda: 0.0)
                 for term, tf in terms_freq.items():
                     df, postings_list = indexer.get_term_data(term)
@@ -46,10 +46,13 @@ def run_search(dict_file, postings_file, queries_file, results_file):
                         continue
 
                     query_weight = (1 + math.log10(tf)) * math.log10(N / df)
+                    query_norm += query_weight**2
 
                     for doc_id, tf in postings_list:
                         doc_weight = 1 + math.log10(tf)
                         scores[doc_id] += doc_weight * query_weight
+
+                query_norm = math.sqrt(query_norm)
 
                 for doc_id in scores.keys():
                     scores[doc_id] /= indexer.doc_norm_lengths[doc_id] * query_norm
