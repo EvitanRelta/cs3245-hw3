@@ -6,6 +6,7 @@ import re
 import sys
 import time
 from collections import Counter, defaultdict
+from functools import cmp_to_key
 from operator import index
 
 import nltk
@@ -20,6 +21,23 @@ def usage():
         + sys.argv[0]
         + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results"
     )
+
+
+def compare_tuples(v1: tuple[float, int], v2: tuple[float, int]) -> int:
+    """Comparison function for my list of (-score, doc_id), to account for
+    floating-point errors in the score.
+
+    This will treat score floats as equal if they're very close.
+    """
+    float1, int1 = v1
+    float2, int2 = v2
+
+    if math.isclose(float1, float2, rel_tol=1e-9):
+        return int1 - int2
+    elif float1 < float2:
+        return -1
+    else:
+        return 1
 
 
 def run_search(dict_file, postings_file, queries_file, results_file):
@@ -68,7 +86,7 @@ def run_search(dict_file, postings_file, queries_file, results_file):
 
             # Get the top 10 highest scores (tie break by doc-ID).
             heap_items = [(-score, doc_id) for doc_id, score in scores.items()]
-            top_items = heapq.nsmallest(10, heap_items)
+            top_items = heapq.nsmallest(10, heap_items, key=cmp_to_key(compare_tuples))
             top_doc_ids = [str(doc_id) for _, doc_id in top_items]
 
             padding = "" if is_first_line else "\n"
