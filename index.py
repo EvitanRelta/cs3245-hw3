@@ -23,48 +23,41 @@ def build_index(in_dir, out_dict, out_postings):
     then output the dictionary file and postings file
     """
     print("indexing...")
-    # This is an empty method
-    # Pls implement your code in below
+    doc_ids = [int(x) for x in os.listdir(in_dir)]
+    doc_norm_lengths: dict[int, float] = {}
+    inverted_index: dict[str, list[tuple[int, int]]] = {}
 
-    filenames = [int(x) for x in os.listdir(in_dir)]
-    normalized_lengths: dict[int, float] = {}
-    index: dict[str, list[tuple[int, int]]] = {}
-
-    for filename in sorted(filenames):
-        filepath = os.path.join(in_dir, str(filename))
-
-        # Each document has its own counter to keep track of the internal counts
-        counter = Counter(Preprocessor.to_token_stream(filepath))
-        normalized_lengths[filename] = math.sqrt(
-            sum((1 + math.log10(term_freq)) ** 2 for term_freq in counter.values())
+    for doc_id in sorted(doc_ids):
+        filepath = os.path.join(in_dir, str(doc_id))
+        tf_dict = Counter(Preprocessor.file_to_token_stream(filepath))
+        doc_norm_lengths[doc_id] = math.sqrt(
+            sum((1 + math.log10(tf)) ** 2 for tf in tf_dict.values())
         )
 
-        # Update the index with local counts
-        for term, term_frequency in counter.items():
-            postings_list = index.get(term, [])
-            postings_list.append((filename, term_frequency))
-            index[term] = postings_list
+        for term, tf in tf_dict.items():
+            postings_list = inverted_index.get(term, [])
+            postings_list.append((doc_id, tf))
+            inverted_index[term] = postings_list
 
-    with open(out_dict, "w") as odict, open(out_postings, "w") as opost:
+    with (
+        open(out_dict, "w") as odict,
+        open(out_postings, "w") as opost,
+    ):
         start_offset = 0
-
-        # Write out the term and document frequency
-        for term, postings_list in index.items():
-            # whitespace separated (doci, term_freq)
-            opost.write(
-                f'{" ".join([f"({id_freq[0]},{id_freq[1]})" for id_freq in postings_list])}\n'
-            )
+        for term, postings_list in inverted_index.items():
+            # Write the DF, offset and size for each term into dictionary file.
+            opost.write(f'{" ".join([f"({doc_id},{tf})" for doc_id, tf in postings_list])}\n')
             end_offset = opost.tell()
             size = end_offset - start_offset
 
-            # whitespace separated - term doc_freq start size
-            odict.write(f"{term} {len(postings_list)} {start_offset} {size}\n")
+            # Write the DF, offset and size for each term into dictionary file.
+            df = len(postings_list)
+            odict.write(f"{term} {df} {start_offset} {size}\n")
             start_offset = end_offset
-
         odict.write("\n")
 
         # Append the normalized lengths to dictionary file.
-        for docid, length in normalized_lengths.items():
+        for docid, length in doc_norm_lengths.items():
             odict.write(f"{docid} {length}\n")
 
 

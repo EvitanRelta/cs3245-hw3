@@ -29,41 +29,52 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     """
     print("running search on the queries...")
     start_time = time.time()
-    with Indexer(dict_file, postings_file) as indexer:
-        with open(queries_file, "r") as in_file, open(results_file, "w") as out_file:
-            is_first_line: bool = True
-            N = indexer.num_docs
 
-            for query in in_file:
-                query = query.rstrip("\n")
-                terms_freq = Counter(Preprocessor.tokenize(query))
+    with (
+        Indexer(dict_file, postings_file) as indexer,
+        open(queries_file, "r") as oqueries,
+        open(results_file, "w") as oresults,
+    ):
+        is_first_line: bool = True
+        N: int = indexer.num_docs
 
-                query_norm = 0
-                scores: dict[int, float] = defaultdict(lambda: 0.0)
-                for term, tf in terms_freq.items():
-                    df, postings_list = indexer.get_term_data(term)
-                    if tf == 0 or df == 0:
-                        continue
+        for query in oqueries:
+            query = query.rstrip("\n")
+            tf_dict = Counter(Preprocessor.to_token_stream(query))
 
-                    query_weight = (1 + math.log10(tf)) * math.log10(N / df)
-                    query_norm += query_weight**2
+            # Compute un-normalized scores first.
+            query_norm_length = 0
+            scores: dict[int, float] = defaultdict(lambda: 0.0)
+            for term, tf in tf_dict.items():
+                df, postings_list = indexer.get_term_data(term)
 
-                    for doc_id, tf in postings_list:
-                        doc_weight = 1 + math.log10(tf)
-                        scores[doc_id] += doc_weight * query_weight
+                # Ignore terms that don't appear in any docs.
+                if df == 0:
+                    continue
 
-                query_norm = math.sqrt(query_norm)
+                query_weight = (1 + math.log10(tf)) * math.log10(N / df)  # Log-TF-IDF for query.
+                query_norm_length += query_weight**2
 
-                for doc_id in scores.keys():
-                    scores[doc_id] /= indexer.doc_norm_lengths[doc_id] * query_norm
+                for doc_id, tf in postings_list:
+                    doc_weight = 1 + math.log10(tf)  # Log-TF (w/o IDF) for documents.
+                    scores[doc_id] += doc_weight * query_weight
 
-                heap_items = [(-score, doc_id) for doc_id, score in scores.items()]
-                top_items = heapq.nsmallest(10, heap_items)
-                relevant_docs = [doc_id for _, doc_id in top_items]
+            query_norm_length = math.sqrt(query_norm_length)
 
-                padding = "" if is_first_line else "\n"
-                out_file.write(padding + " ".join(map(str, relevant_docs)))
-                is_first_line = False
+            # Do cosine normalization on the scores.
+            for doc_id in scores.keys():
+                doc_norm_length = indexer.doc_norm_lengths[doc_id]
+                scores[doc_id] /= doc_norm_length * query_norm_length
+
+            # Get the top 10 highest scores (tie break by doc-ID).
+            heap_items = [(-score, doc_id) for doc_id, score in scores.items()]
+            top_items = heapq.nsmallest(10, heap_items)
+            top_doc_ids = [str(doc_id) for _, doc_id in top_items]
+
+            padding = "" if is_first_line else "\n"
+            oresults.write(padding + " ".join(top_doc_ids))
+            is_first_line = False
+
     end_time = time.time()
     print(f"Execution time: {end_time - start_time}s")
 
